@@ -45,11 +45,19 @@ window.MOCK_DATA = {
   ],
 
   events: [
-    { event_id:'evt-001', church_id:'ch-001', title:'مؤتمر الشباب الصيفي', event_type:'conference', starts_at:new Date(Date.now()+30*864e5).toISOString(), location:'دير الأنبا بيشوي', capacity:100, price:500, status:'open' },
-    { event_id:'evt-002', church_id:'ch-001', title:'رحلة الإسكندرية', event_type:'trip', starts_at:new Date(Date.now()+14*864e5).toISOString(), location:'الإسكندرية', capacity:50, price:300, status:'open' }
+    { event_id:'evt-001', church_id:'ch-001', title:'مؤتمر الشباب الصيفي', description:'مؤتمر روحي لمدة 3 أيام', event_type:'conference', starts_at:new Date(Date.now()+30*864e5).toISOString(), ends_at:new Date(Date.now()+33*864e5).toISOString(), location:'دير الأنبا بيشوي', capacity:100, reserved_seats:10, vip_seats:5, servant_seats:5, waitlist_capacity:20, overbook_pct:0, price:500, currency:'EGP', has_waiting_list:true, requires_approval:false, auto_close_when_full:true, lifecycle:'reg_open', status:'active', access_rules:{ min_age:14, max_age:35 }, approval_required:true, approved_by:'usr-001', approved_at:new Date(Date.now()-5*864e5).toISOString(), created_by:'usr-001', created_at:new Date(Date.now()-10*864e5).toISOString() },
+    { event_id:'evt-002', church_id:'ch-001', title:'رحلة الإسكندرية', description:'رحلة يوم واحد', event_type:'trip', starts_at:new Date(Date.now()+14*864e5).toISOString(), ends_at:new Date(Date.now()+14*864e5+10*36e5).toISOString(), location:'الإسكندرية', capacity:50, reserved_seats:0, vip_seats:0, servant_seats:4, waitlist_capacity:10, overbook_pct:5, price:300, currency:'EGP', has_waiting_list:true, requires_approval:true, auto_close_when_full:true, lifecycle:'reg_open', status:'active', access_rules:{}, approval_required:true, approved_by:'usr-001', approved_at:new Date(Date.now()-3*864e5).toISOString(), created_by:'usr-001', created_at:new Date(Date.now()-7*864e5).toISOString() }
   ],
 
   event_bookings: [],
+  event_templates: [
+    { template_id:'tpl-001', church_id:'ch-001', name:'مؤتمر شبابي', event_type:'conference', defaults:{ capacity:100, price:500, duration_hours:72, access_rules:{ min_age:14, max_age:35 }, tasks:[{title:'تجهيز المكان', role:'organizer'},{title:'تنسيق الانتقالات', role:'transport'}], budget_lines:[{category:'transport', label:'حافلات', estimated:5000},{category:'food', label:'وجبات', estimated:8000}] }, created_by:'usr-001', created_at:new Date().toISOString() },
+    { template_id:'tpl-002', church_id:'ch-001', name:'رحلة يوم', event_type:'trip', defaults:{ capacity:50, price:300, duration_hours:10, access_rules:{}, tasks:[{title:'حجز الحافلة', role:'transport'}], budget_lines:[{category:'transport', label:'حافلة', estimated:3000}] }, created_by:'usr-001', created_at:new Date().toISOString() }
+  ],
+  event_tasks: [],
+  event_budgets: [],
+  event_expenses: [],
+  event_timeline: [],
   followup_tasks: [
     { task_id:'tsk-001', church_id:'ch-001', member_id:'mem-004', assigned_to:'usr-002', created_by:'system', reason:'غياب 3 مرات متتالية عن مدارس الأحد', priority:'high', due_at:new Date(Date.now()+2*864e5).toISOString(), status:'open', escalation_level:0, created_at:new Date().toISOString() }
   ],

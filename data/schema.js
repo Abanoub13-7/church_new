@@ -128,39 +128,151 @@ window.SCHEMA = {
     constraints: ['UNIQUE(session_id, member_id)'] // duplicate prevention
   },
 
-  /* ===== EVENTS ===== */
+  /* ===== EVENTS (Enterprise) ===== */
   events: {
     fields: {
-      event_id:      { type: 'uuid', pk: true },
-      church_id:     { type: 'uuid', ref: 'churches.church_id', required: true },
-      title:         { type: 'string' },
-      description:   { type: 'text' },
-      event_type:    { type: 'string' },
-      starts_at:     { type: 'datetime' },
-      ends_at:       { type: 'datetime' },
-      location:      { type: 'string' },
-      capacity:      { type: 'int' },
-      price:         { type: 'decimal' },
+      event_id:        { type: 'uuid', pk: true },
+      church_id:       { type: 'uuid', ref: 'churches.church_id', required: true },
+      title:           { type: 'string' },
+      description:     { type: 'text' },
+      event_type:      { type: 'string' }, // conference|retreat|meeting|class|course|trip|camp|prayer|ministry|servant
+      starts_at:       { type: 'datetime' },
+      ends_at:         { type: 'datetime' },
+      location:        { type: 'string' },
+      capacity:        { type: 'int' },
+      reserved_seats:  { type: 'int', default: 0 },     // VIP+servant reserved
+      vip_seats:       { type: 'int', default: 0 },
+      servant_seats:   { type: 'int', default: 0 },
+      waitlist_capacity:{ type: 'int', default: 0 },    // 0 = unlimited
+      overbook_pct:    { type: 'int', default: 0 },     // smart overbooking ratio
+      price:           { type: 'decimal' },
+      currency:        { type: 'string', default: 'EGP' },
       has_waiting_list:{ type: 'boolean', default: true },
-      status:        { type: 'enum', values: ['draft','open','full','closed','cancelled'] },
-      created_by:    { type: 'uuid', ref: 'users.user_id' },
-      created_at:    { type: 'datetime' }
+      requires_approval:{ type: 'boolean', default: false },
+      auto_close_when_full:{ type: 'boolean', default: true },
+      registration_opens_at: { type: 'datetime', nullable: true },
+      registration_closes_at:{ type: 'datetime', nullable: true },
+      // Lifecycle: draft → review → published → reg_open → reg_closed → ongoing → completed → archived
+      lifecycle:       { type: 'enum', values: ['draft','review','published','reg_open','reg_closed','ongoing','completed','archived'], default: 'draft' },
+      // Operational status — derived but cached: draft|pending_approval|published|active|full|waitlist|completed|cancelled|archived
+      status:          { type: 'enum', values: ['draft','pending_approval','published','active','full','waitlist','completed','cancelled','archived'], default: 'draft' },
+      // Access rules (role-based event access)
+      access_rules:    { type: 'json', default: {} }, // { roles:[], min_age, max_age, gender, ministries:[], classes:[], min_attendance_rate, min_serving_level }
+      // Template + budget links
+      template_id:     { type: 'uuid', ref: 'event_templates.template_id', nullable: true },
+      budget_id:       { type: 'uuid', ref: 'event_budgets.budget_id', nullable: true },
+      treasury_id:     { type: 'uuid', ref: 'treasuries.treasury_id', nullable: true },
+      // Workflow + approval
+      approval_required:{ type: 'boolean', default: false },
+      approved_by:     { type: 'uuid', ref: 'users.user_id', nullable: true },
+      approved_at:     { type: 'datetime', nullable: true },
+      cancelled_reason:{ type: 'string', nullable: true },
+      created_by:      { type: 'uuid', ref: 'users.user_id' },
+      updated_at:      { type: 'datetime', nullable: true },
+      created_at:      { type: 'datetime' }
     }
   },
 
-  /* ===== EVENT BOOKINGS ===== */
+  /* ===== EVENT BOOKINGS / REGISTRATIONS ===== */
   event_bookings: {
     fields: {
-      booking_id:    { type: 'uuid', pk: true },
-      church_id:     { type: 'uuid', ref: 'churches.church_id', required: true },
-      event_id:      { type: 'uuid', ref: 'events.event_id' },
-      member_id:     { type: 'uuid', ref: 'members.member_id' },
-      booking_status:{ type: 'enum', values: ['confirmed','waiting','cancelled','attended','no_show'] },
-      bus_number:    { type: 'string', nullable: true },
-      room_number:   { type: 'string', nullable: true },
-      payment_status:{ type: 'enum', values: ['unpaid','partial','paid','refunded'] },
-      qr_ticket:     { type: 'string' },
-      created_at:    { type: 'datetime' }
+      booking_id:      { type: 'uuid', pk: true },
+      church_id:       { type: 'uuid', ref: 'churches.church_id', required: true },
+      event_id:        { type: 'uuid', ref: 'events.event_id' },
+      member_id:       { type: 'uuid', ref: 'members.member_id' },
+      // Lifecycle: pending → approved → rejected → waiting → confirmed → attended | no_show | cancelled
+      booking_status:  { type: 'enum', values: ['pending','approved','rejected','confirmed','waiting','cancelled','attended','no_show'] },
+      waitlist_position:{ type: 'int', nullable: true },
+      seat_class:      { type: 'enum', values: ['regular','vip','servant','reserved'], default: 'regular' },
+      bus_number:      { type: 'string', nullable: true },
+      room_number:     { type: 'string', nullable: true },
+      payment_status:  { type: 'enum', values: ['unpaid','partial','paid','refunded'] },
+      amount_paid:     { type: 'decimal', default: 0 },
+      qr_ticket:       { type: 'string' },           // unique ticket code
+      reservation_code:{ type: 'string' },           // human-readable code
+      checked_in_at:   { type: 'datetime', nullable: true },
+      approved_by:     { type: 'uuid', nullable: true },
+      approved_at:     { type: 'datetime', nullable: true },
+      rejected_reason: { type: 'string', nullable: true },
+      notes:           { type: 'text', nullable: true },
+      created_at:      { type: 'datetime' }
+    }
+  },
+
+  /* ===== EVENT TEMPLATES (reusable blueprints) ===== */
+  event_templates: {
+    fields: {
+      template_id:     { type: 'uuid', pk: true },
+      church_id:       { type: 'uuid', ref: 'churches.church_id', required: true },
+      name:            { type: 'string' },
+      event_type:      { type: 'string' },
+      defaults:        { type: 'json' }, // { capacity, price, duration_hours, access_rules, tasks:[], budget_lines:[] }
+      created_by:      { type: 'uuid', ref: 'users.user_id' },
+      created_at:      { type: 'datetime' }
+    }
+  },
+
+  /* ===== EVENT TASKS (organizer / volunteer assignments) ===== */
+  event_tasks: {
+    fields: {
+      task_id:         { type: 'uuid', pk: true },
+      church_id:       { type: 'uuid', ref: 'churches.church_id', required: true },
+      event_id:        { type: 'uuid', ref: 'events.event_id' },
+      title:           { type: 'string' },
+      role:            { type: 'string' }, // organizer|servant|volunteer|transport|attendance|finance
+      assigned_to:     { type: 'uuid', ref: 'users.user_id', nullable: true },
+      due_at:          { type: 'datetime', nullable: true },
+      status:          { type: 'enum', values: ['open','in_progress','done','escalated','cancelled'], default: 'open' },
+      escalation_level:{ type: 'int', default: 0 },
+      completed_at:    { type: 'datetime', nullable: true },
+      created_at:      { type: 'datetime' }
+    }
+  },
+
+  /* ===== EVENT BUDGETS ===== */
+  event_budgets: {
+    fields: {
+      budget_id:       { type: 'uuid', pk: true },
+      church_id:       { type: 'uuid', ref: 'churches.church_id', required: true },
+      event_id:        { type: 'uuid', ref: 'events.event_id' },
+      estimated_total: { type: 'decimal', default: 0 },
+      approved_total:  { type: 'decimal', default: 0 },
+      actual_total:    { type: 'decimal', default: 0 },
+      lines:           { type: 'json', default: [] }, // [{ category, label, estimated, actual }]
+      approval_status: { type: 'enum', values: ['draft','pending','approved','rejected'], default: 'draft' },
+      approved_by:     { type: 'uuid', nullable: true },
+      approved_at:     { type: 'datetime', nullable: true },
+      created_at:      { type: 'datetime' }
+    }
+  },
+
+  /* ===== EVENT EXPENSES (links to financial_transactions) ===== */
+  event_expenses: {
+    fields: {
+      expense_id:      { type: 'uuid', pk: true },
+      church_id:       { type: 'uuid', ref: 'churches.church_id', required: true },
+      event_id:        { type: 'uuid', ref: 'events.event_id' },
+      category:        { type: 'string' }, // transport|food|equipment|activity|service|other
+      label:           { type: 'string' },
+      amount:          { type: 'decimal' },
+      transaction_id:  { type: 'uuid', ref: 'financial_transactions.transaction_id', nullable: true },
+      status:          { type: 'enum', values: ['pending','approved','rejected','paid'], default: 'pending' },
+      created_by:      { type: 'uuid', ref: 'users.user_id' },
+      created_at:      { type: 'datetime' }
+    }
+  },
+
+  /* ===== EVENT TIMELINE (immutable event log) ===== */
+  event_timeline: {
+    fields: {
+      entry_id:        { type: 'uuid', pk: true },
+      church_id:       { type: 'uuid', ref: 'churches.church_id', required: true },
+      event_id:        { type: 'uuid', ref: 'events.event_id' },
+      member_id:       { type: 'uuid', nullable: true },
+      action:          { type: 'string' }, // created|approved|published|registration_opened|registered|waitlisted|promoted|approved_reg|rejected_reg|checked_in|cancelled|completed|archived|expense_added|task_assigned
+      actor_id:        { type: 'uuid', nullable: true },
+      meta:            { type: 'json', default: {} },
+      created_at:      { type: 'datetime' }
     }
   },
 
