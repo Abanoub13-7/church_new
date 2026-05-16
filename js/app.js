@@ -69,10 +69,13 @@
       { id:'followup',   label:'الافتقاد',    icon:'fa-hand-holding-heart', href:'followup.html' },
       { section:'الذكاء والأتمتة' },
       { id:'ai-insights',label:'تحليلات AI',  icon:'fa-brain',         href:'ai-insights.html' },
+      { id:'analytics',  label:'التحليلات التشغيلية', icon:'fa-chart-mixed', href:'analytics.html' },
       { id:'workflows',  label:'Workflows',    icon:'fa-diagram-project', href:'workflows.html' },
+      { id:'workflow-builder', label:'Workflow Builder', icon:'fa-shapes', href:'workflow-builder.html' },
       { id:'notifications', label:'الإشعارات', icon:'fa-bell',         href:'notifications.html' },
       { section:'النظام' },
       { id:'finance',    label:'الماليات',    icon:'fa-coins',         href:'finance.html', roles:['church_admin','finance','financial_manager'] },
+      { id:'finance-reports', label:'التقارير المالية', icon:'fa-chart-line', href:'finance-reports.html', roles:['church_admin','finance','financial_manager'] },
       { id:'security',   label:'الأمان',      icon:'fa-shield-halved', href:'security.html', roles:['church_admin'] },
       { id:'settings',   label:'الإعدادات',   icon:'fa-cog',           href:'settings.html', roles:['church_admin'] }
     ];
