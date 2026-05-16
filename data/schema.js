@@ -319,5 +319,94 @@ window.SCHEMA = {
       user_agent:    { type: 'string' },
       created_at:    { type: 'datetime' }
     }
+  },
+
+  /* ===== PHASE 1 ADDITIONS ===== */
+  audit_logs: {
+    fields: {
+      log_id:    { type:'uuid', pk:true },
+      church_id: { type:'uuid', ref:'churches.church_id', nullable:true },
+      user_id:   { type:'uuid', ref:'users.user_id', nullable:true },
+      user_name: { type:'string' }, role:{ type:'string' },
+      action:    { type:'string', required:true },
+      meta:      { type:'json' },
+      severity:  { type:'enum', values:['info','success','warning','critical'] },
+      impersonator_id:{ type:'uuid', nullable:true },
+      created_at:{ type:'datetime' }
+    }
+  },
+  feature_flags: {
+    fields: {
+      flag_id:          { type:'uuid', pk:true },
+      church_id:        { type:'uuid', ref:'churches.church_id', required:true },
+      disabled_modules: { type:'json' } // string[]
+    }
+  },
+  subscription_plans: {
+    fields: {
+      plan_key:    { type:'string', pk:true },
+      label:       { type:'string' },
+      max_members: { type:'number' },
+      max_users:   { type:'number' },
+      storage_mb:  { type:'number' },
+      features:    { type:'json' }
+    }
+  },
+  custom_roles: {
+    fields: {
+      role_id:      { type:'uuid', pk:true },
+      church_id:    { type:'uuid', ref:'churches.church_id', nullable:true },
+      role_key:     { type:'string', unique:true },
+      label:        { type:'string' },
+      capabilities: { type:'json' }, // string[] of canX
+      is_active:    { type:'boolean', default:true },
+      created_at:   { type:'datetime' }
+    }
+  },
+  platform_notifications: {
+    fields: {
+      notification_id:{ type:'uuid', pk:true },
+      title:{ type:'string', required:true }, body:{ type:'text' },
+      type:{ type:'enum', values:['info','maintenance','alert','update'] },
+      target:{ type:'string' }, // 'all' or church_id
+      created_by:{ type:'uuid', ref:'users.user_id' },
+      created_at:{ type:'datetime' }
+    }
+  },
+
+  /* ===== PHASE 2 — Enterprise finance ===== */
+  treasuries: {
+    fields: {
+      treasury_id:{ type:'uuid', pk:true }, church_id:{ type:'uuid', ref:'churches.church_id' },
+      account_key:{ type:'string' }, code:{ type:'string' }, name:{ type:'string' },
+      type:{ type:'enum', values:['asset','income','expense','equity'] },
+      balance:{ type:'decimal', default:0 },
+      created_at:{ type:'datetime' }, updated_at:{ type:'datetime', nullable:true }
+    }
+  },
+  ledger_entries: {
+    fields: {
+      entry_id:{ type:'uuid', pk:true }, church_id:{ type:'uuid', ref:'churches.church_id' },
+      transaction_id:{ type:'uuid', ref:'financial_transactions.transaction_id' },
+      treasury_id:{ type:'uuid', ref:'treasuries.treasury_id' },
+      account_key:{ type:'string' }, period_id:{ type:'string' },
+      debit:{ type:'decimal', default:0 }, credit:{ type:'decimal', default:0 },
+      description:{ type:'text' }, created_at:{ type:'datetime' }
+    }
+  },
+  fin_periods: {
+    fields: {
+      period_id:{ type:'string', pk:true }, church_id:{ type:'uuid', ref:'churches.church_id' },
+      status:{ type:'enum', values:['open','closed'], default:'open' },
+      opened_at:{ type:'datetime' }, closed_at:{ type:'datetime', nullable:true },
+      closed_by:{ type:'uuid', ref:'users.user_id', nullable:true }
+    }
+  },
+  fin_insights: {
+    fields: {
+      kind:{ type:'string' }, severity:{ type:'enum', values:['info','warning','critical'] },
+      msg:{ type:'text' }, church_id:{ type:'uuid', ref:'churches.church_id' },
+      computed_at:{ type:'datetime' }
+    }
   }
 };

@@ -72,7 +72,8 @@
       { id:'workflows',  label:'Workflows',    icon:'fa-diagram-project', href:'workflows.html' },
       { id:'notifications', label:'الإشعارات', icon:'fa-bell',         href:'notifications.html' },
       { section:'النظام' },
-      { id:'finance',    label:'الماليات',    icon:'fa-coins',         href:'finance.html', roles:['church_admin','finance'] },
+      { id:'finance',    label:'الماليات',    icon:'fa-coins',         href:'finance.html', roles:['church_admin','finance','financial_manager'] },
+      { id:'security',   label:'الأمان',      icon:'fa-shield-halved', href:'security.html', roles:['church_admin'] },
       { id:'settings',   label:'الإعدادات',   icon:'fa-cog',           href:'settings.html', roles:['church_admin'] }
     ];
 
@@ -133,8 +134,10 @@
   function roleLabel(r){
     return ({
       super_admin:'مدير المنصة', church_admin:'مدير الكنيسة',
-      service_admin:'أمين الخدمة', servant:'خادم',
-      supervisor:'مشرف', finance:'محاسب', viewer:'عرض فقط'
+      financial_manager:'مدير مالي', servant_leader:'قائد خدمة',
+      servant:'خادم', viewer:'عرض فقط', member:'عضو',
+      // legacy
+      service_admin:'أمين الخدمة', supervisor:'مشرف', finance:'محاسب'
     })[r] || r;
   }
 
@@ -143,10 +146,15 @@
     init(pageId, requiredRoles){
       if (!Auth.require(requiredRoles)) return false;
       renderLayout(pageId);
+      // run permission-driven DOM hiding after layout render
+      setTimeout(() => { try{ Permissions.applyDomGuards(); }catch(_){} }, 0);
       return true;
     },
     content(){ return document.getElementById('page-content'); },
-    render(html){ App.content().innerHTML = html; }
+    render(html){
+      App.content().innerHTML = html;
+      try{ Permissions.applyDomGuards(App.content()); }catch(_){}
+    }
   };
 
   // Run workflow engine + AI on app start (every page load)

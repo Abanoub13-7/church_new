@@ -54,18 +54,27 @@
   <script src="data/mock-data.js"></script>
   <script src="js/db.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/security.js"></script>
   <script>
     DB.all('churches'); // seed
-    document.getElementById('login-form').addEventListener('submit', e => {
+    document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const pwd = document.getElementById('password').value;
-      const remember = document.getElementById('remember').checked;
-      const result = Auth.login(email, pwd, remember);
-      if (!result.ok){
-        document.getElementById('error').textContent = result.error;
-      } else {
-        location.href = result.session.role === 'super_admin' ? 'super-admin.html' : 'dashboard.html';
+      const btn = e.target.querySelector('button[type="submit"]');
+      const err = document.getElementById('error');
+      err.textContent = '';
+      btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق...';
+      try{
+        const email = document.getElementById('email').value.trim();
+        const pwd = document.getElementById('password').value;
+        const remember = document.getElementById('remember').checked;
+        const result = await Auth.login(email, pwd, remember);
+        if (!result.ok){
+          err.textContent = result.error;
+        } else {
+          location.href = result.session.role === 'super_admin' ? 'super-admin.html' : 'dashboard.html';
+        }
+      } finally {
+        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول';
       }
     });
   </script>
