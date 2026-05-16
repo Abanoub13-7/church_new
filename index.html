@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Church Mega Platform</title>
+<script>
+  const session = sessionStorage.getItem('church_session_v1') || localStorage.getItem('church_session_v1');
+  if (session){
+    const s = JSON.parse(session);
+    location.replace(s.role === 'super_admin' ? 'super-admin.html' : 'dashboard.html');
+  } else {
+    location.replace('login.html');
+  }
+</script>
+</head>
+<body></body>
+</html>

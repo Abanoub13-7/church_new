@@ -1,0 +1,38 @@
+/* ============================================================
+   RESPONSIVE.CSS — Mobile + Dark Mode polish
+   ============================================================ */
+@media (max-width:1024px){
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;inset-inline-start:0;top:0;width:260px;height:100vh;z-index:200;
+    transform:translateX(100%);transition:transform .25s ease;
+  }
+  body[dir="rtl"] .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:none!important}
+  .menu-toggle{display:flex;align-items:center;justify-content:center}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .topbar-search{display:none}
+  .content{padding:1rem}
+  .page-title{font-size:1.3rem}
+  .user-chip .name,.user-chip .role{display:none}
+}
+@media (max-width:480px){
+  .modal{max-width:100%}
+  .stat-card{padding:1rem}
+  .stat-value{font-size:1.3rem}
+}
+
+/* sidebar overlay on mobile */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150}
+.sidebar-overlay.show{display:block}
+
+/* print */
+@media print{
+  .sidebar,.topbar,.btn,.icon-btn{display:none!important}
+  .content{padding:0}
+  .card{box-shadow:none;border-color:#000}
+}
