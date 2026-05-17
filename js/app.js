@@ -57,7 +57,21 @@
     const isSuper = session.role === 'super_admin';
 
     const NAV = isSuper ? [
-      { id:'super-admin', label:'لوحة المنصة', icon:'fa-globe', href:'super-admin.html' }
+      { section:'المنصة' },
+      { id:'super-admin',      label:'لوحة المنصة',       icon:'fa-globe',         href:'super-admin.html' },
+      { id:'tenants',          label:'المستأجرون',         icon:'fa-church',        href:'tenants.html' },
+      { id:'platform-health',  label:'صحة المنصة',         icon:'fa-heart-pulse',   href:'platform-health.html' },
+      { section:'الفوترة' },
+      { id:'subscriptions',    label:'الاشتراكات والخطط',  icon:'fa-credit-card',   href:'subscriptions.html' },
+      { id:'billing',          label:'الفواتير والمدفوعات', icon:'fa-file-invoice-dollar', href:'billing.html' },
+      { section:'الذكاء والتحليل' },
+      { id:'usage-analytics',  label:'تحليلات الاستخدام',  icon:'fa-chart-mixed',   href:'usage-analytics.html' },
+      { id:'ai-ops',           label:'رؤى AI التشغيلية',   icon:'fa-brain',         href:'ai-ops.html' },
+      { section:'العمليات' },
+      { id:'white-label',      label:'العلامة التجارية',   icon:'fa-palette',       href:'white-label.html' },
+      { id:'support',          label:'مركز الدعم',         icon:'fa-headset',       href:'support.html' },
+      { id:'knowledge-base',   label:'قاعدة المعرفة',      icon:'fa-book',          href:'knowledge-base.html' },
+      { id:'backups',          label:'النسخ الاحتياطية',   icon:'fa-database',      href:'backups.html' }
     ] : [
       { section:'الرئيسية' },
       { id:'dashboard', label:'لوحة التحكم', icon:'fa-gauge-high', href:'dashboard.html' },
@@ -76,6 +90,10 @@
       { section:'النظام' },
       { id:'finance',    label:'الماليات',    icon:'fa-coins',         href:'finance.html', roles:['church_admin','finance','financial_manager'] },
       { id:'finance-reports', label:'التقارير المالية', icon:'fa-chart-line', href:'finance-reports.html', roles:['church_admin','finance','financial_manager'] },
+      { id:'my-billing', label:'اشتراكي وفواتيري', icon:'fa-credit-card', href:'my-billing.html', roles:['church_admin','financial_manager'] },
+      { id:'white-label',label:'العلامة التجارية', icon:'fa-palette',   href:'white-label.html', roles:['church_admin'] },
+      { id:'support',    label:'مركز الدعم',  icon:'fa-headset',       href:'support.html' },
+      { id:'knowledge-base', label:'قاعدة المعرفة', icon:'fa-book',    href:'knowledge-base.html' },
       { id:'security',   label:'الأمان',      icon:'fa-shield-halved', href:'security.html', roles:['church_admin'] },
       { id:'settings',   label:'الإعدادات',   icon:'fa-cog',           href:'settings.html', roles:['church_admin'] }
     ];
@@ -162,7 +180,11 @@
 
   // Run workflow engine + AI on app start (every page load)
   window.addEventListener('DOMContentLoaded', () => {
-    if (Auth.session() && window.WorkflowEngine && Auth.session().role !== 'super_admin'){
+    const s = Auth.session(); if (!s) return;
+    try{ window.Billing && Billing.runLifecycle(); }catch(_){}
+    try{ window.Backup && Backup.schedule(); }catch(_){}
+    try{ window.WhiteLabel && WhiteLabel.applyForCurrent(); }catch(_){}
+    if (window.WorkflowEngine && s.role !== 'super_admin'){
       try{ WorkflowEngine.runAll(); }catch(_){}
       try{ AIEngine.recomputeAll(); }catch(_){}
     }
